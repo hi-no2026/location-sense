@@ -16,6 +16,7 @@ After each save point, push it to GitHub.
 - Added a few example place prompts and a visual explanation of how this differs from tools that focus mainly on relevant directions.
 - Added browser `localStorage` saves in one small file: `public/app.js`. No real people or database are used.
 - Saves on this computer only for now.
+- Added a clearly labeled offline fallback: if the online AI key or connection is unavailable, a place-aware general hazard guide still appears so the MVP can be demonstrated safely. A valid `OPENAI_API_KEY` enables the online fact lookup again.
 
 ## Put online with Vercel
 - Vercel runs the page from `public/` and the AI server as the `api/analyze.js` function.

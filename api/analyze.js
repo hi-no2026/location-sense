@@ -28,7 +28,7 @@ function readBody(req) {
 async function askLocation(place) {
   const env = localEnv();
   const key = process.env.VERCEL ? process.env.OPENAI_API_KEY : env.OPENAI_API_KEY;
-  if (!key) throw new Error('missing key');
+  if (!key) return { answer: fallbackAnswer(place), fallback: true };
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
@@ -41,12 +41,27 @@ async function askLocation(place) {
       ],
       max_output_tokens: 500
     })
-  });
-  if (!response.ok) throw new Error(`AI request failed: ${response.status}`);
+  }).catch(() => null);
+  if (!response || !response.ok) return { answer: fallbackAnswer(place), fallback: true };
   const data = await response.json();
   const text = data.output_text || (data.output || []).flatMap(item => item.content || []).map(part => part.text || '').join('');
-  if (!text) throw new Error('empty answer');
-  return text;
+  if (!text) return { answer: fallbackAnswer(place), fallback: true };
+  return { answer: text, fallback: false };
+}
+
+function fallbackAnswer(place) {
+  const name = place.trim();
+  const lower = name.toLowerCase();
+  let hazards = [
+    'Uneven pavement, objects, or temporary signs may be hard to notice.',
+    'Noise, crowds, or changing foot traffic may make it harder to hear what is around you.',
+    'Entrances, crossings, and changes in surface may not be obvious without clear landmarks.'
+  ];
+  if (/(park|trail|playground|garden)/.test(lower)) hazards = ['Roots, grass, gravel, or broken pavement may make the ground uneven.', 'Benches, bins, branches, and play equipment may be in the walking path.', 'Dogs, bikes, and children may move through the area unexpectedly.'];
+  else if (/(library|school|office|museum|store|shop|mall)/.test(lower)) hazards = ['Doorways, steps, displays, or furniture may narrow the walking path.', 'People, carts, and queues may move around the entrance and aisles.', 'Lighting, glass doors, and changes between indoor surfaces may be difficult to judge.'];
+  else if (/(station|airport|bus|transit|train|subway)/.test(lower)) hazards = ['Crowds, luggage, and signs may create obstacles near entrances and platforms.', 'Announcements and vehicle noise may make it harder to hear nearby movement.', 'Stairs, platform edges, and changing boarding areas require extra care.'];
+  else if (/(street|downtown|city|market|restaurant|cafe)/.test(lower)) hazards = ['Traffic, bicycles, signs, bins, and outdoor seating may block the route.', 'Crossings may be busy, noisy, or different from what you expect.', 'Construction or parked vehicles may force a detour.'];
+  return `Difficulty: Medium\n\nWhat may be difficult:\n- ${hazards.join('\n- ')}\n\nHelpful preparation:\n- Consider checking the entrance and route with a trusted person before you go.\n- Keep a phone or mobility aid ready, and allow extra time to pause and listen.\n\nThis is general preparation guidance, not a live report about ${name}. Conditions can change, so use your own judgment.`;
 }
 
 module.exports = async function analyze(req, res) {
@@ -54,7 +69,7 @@ module.exports = async function analyze(req, res) {
     const body = await readBody(req);
     const place = String(body.place || '').trim();
     if (!place) return res.status(400).json({ error: 'Please enter a place.' });
-    return res.status(200).json({ answer: await askLocation(place) });
+    return res.status(200).json(await askLocation(place));
   } catch (error) {
     console.error('Location Sense AI error:', error.message);
     return res.status(502).json({ error: 'I could not check that place right now. Please check the AI key and your internet connection, then try again.' });
