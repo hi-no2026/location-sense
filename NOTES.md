@@ -7,6 +7,8 @@
 
 The model used is `gpt-5.6-luna`. The server reads the OpenAI key only from `.env`; the key is never sent to the page. `.env` is ignored by Git.
 
+After each save point, push it to GitHub.
+
 ## Done in Version 1
 - Saved the project brief in `BRIEF.md` and send it as the AI's system instructions with every request.
 - Added one main flow: enter a place, wait while the AI checks it, and read the possible difficulties.
