@@ -17,6 +17,12 @@ After each save point, push it to GitHub.
 - Added browser `localStorage` saves in one small file: `public/app.js`. No real people or database are used.
 - Saves on this computer only for now.
 
+## Put online with Vercel
+- Vercel runs the page from `public/` and the AI server as the `api/analyze.js` function.
+- In Vercel Project Settings → Environment Variables, add `OPENAI_API_KEY` with the same value used locally in `.env`. Add it for the environments where you deploy (Preview and/or Production). Never paste the key into GitHub or the page.
+- No other Vercel setting is needed. The included `vercel.json` handles the page and API route.
+- Local testing still uses `node server.js` and `.env`. The current local key returned `invalid_api_key` during testing, so replace it with a valid key before expecting AI answers locally or online.
+
 ## Maybe Later
 - Add a map and exact route information.
 - Add voice input and text-to-speech.
